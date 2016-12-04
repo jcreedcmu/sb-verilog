@@ -1,23 +1,23 @@
 module main;
    parameter STDIN  = 32'h8000_0000;
 
-//   initial $interact;
+   reg [7:0] avail;
+   reg [7:0] data;
+
+   initial begin
+      avail = 0;
+      data = 0;
+   end
 
    always
      #1
        if (!$feof(STDIN))
          begin
-            $display("stdin %d", $fgetc(STDIN));
+            $read_async(avail, data, 100);
+            $display("avail %d data %d", avail, data);
          end
 
-   // initial begin
-   //    val = 2;
-   //    $increment(val);
-   //    $display("After $increment, val=%d", val);
-   // end
-
-
-initial
-  #20 $finish;     //finish after 20 time units
+   initial
+     #20 $finish;
 
 endmodule

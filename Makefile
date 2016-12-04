@@ -1,3 +1,6 @@
+perl: interact.vpi hello.vvp
+	perl input.pl | vvp -M. -minteract hello.vvp
+
 run: interact.vpi hello.vvp
 	vvp -M. -minteract hello.vvp
 

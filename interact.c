@@ -1,13 +1,10 @@
-# include  <vpi_user.h>
+#include <stdio.h>
+#include <unistd.h>
+#include <ctype.h>
+#include <sys/time.h>
+#include <fcntl.h>
 
-static int interact_compiletf(char *user_data) {
-  return 0;
-}
-
-static int interact_calltf(char *user_data) {
-  vpi_printf("Interact, World!\n");
-  return 0;
-}
+#include  <vpi_user.h>
 
 static int increment(char *userdata) {
   vpiHandle systfref, args_iter, argh;
@@ -34,17 +31,69 @@ static int increment(char *userdata) {
   return 0;
 }
 
-void interact_register() {
-  s_vpi_systf_data tf_data;
-
-  tf_data.type      = vpiSysTask;
-  tf_data.tfname    = "$interact";
-  tf_data.calltf    = interact_calltf;
-  tf_data.compiletf = interact_compiletf;
-  tf_data.sizetf    = 0;
-  tf_data.user_data = 0;
-  vpi_register_systf(&tf_data);
+static void _readIn(int *avail, char *data, int waitMs) {
+  int stdin = 0;
+  fd_set fds;
+  FD_ZERO(&fds);
+  FD_SET(stdin, &fds);
+  struct timeval timeout;
+  timeout.tv_sec = waitMs / 1000;
+  timeout.tv_usec = (waitMs * 1000) % 1000000;
+  *avail = select(1, &fds, (fd_set *) 0, (fd_set *) 0, &timeout);
+  if (*avail) {
+    read(stdin, data, 1);
+  }
 }
+
+// $readIn(availReg, dataReg, timeoutInMs)
+static int readIn(char *userdata) {
+  vpiHandle systfref, args_iter;
+  vpiHandle argh[3];
+  struct t_vpi_value argval;
+
+  // Obtain a handle to the argument list
+  systfref = vpi_handle(vpiSysTfCall, NULL);
+  args_iter = vpi_iterate(vpiArgument, systfref);
+  // XXX how to check number, types of arguments???
+  argh[0] = vpi_scan(args_iter);
+  argh[1] = vpi_scan(args_iter);
+  argh[2] = vpi_scan(args_iter);
+
+  argval.format = vpiIntVal;
+  vpi_get_value(argh[2], &argval);
+  int timeout = argval.value.integer;
+
+  int avail, data;
+  _readIn(&avail, &data, timeout);
+
+  if (avail) {
+    // Availability into first argument
+    argval.format = vpiIntVal;
+    argval.value.integer = avail;
+    vpi_put_value(argh[0], &argval, NULL, vpiNoDelay);
+
+    // Data into first argument
+    argval.format = vpiIntVal;
+    argval.value.integer = data;
+    vpi_put_value(argh[1], &argval, NULL, vpiNoDelay);
+  }
+
+  // Cleanup and return
+  vpi_free_object(args_iter);
+  return 0;
+}
+
+void register_readIn() {
+  s_vpi_systf_data data;
+  data.type = vpiSysTask;
+  data.tfname = "$read_async";
+  data.sizetf = 0;
+  data.user_data = 0;
+  data.calltf = readIn;
+  data.compiletf = 0;
+  vpi_register_systf(&data);
+}
+
 
 void register_increment() {
   s_vpi_systf_data data;
@@ -58,7 +107,8 @@ void register_increment() {
 }
 
 void (*vlog_startup_routines[])() = {
-  interact_register,
+  //  register_interact,
+  register_readIn,
   register_increment,
   0
 };
