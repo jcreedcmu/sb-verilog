@@ -11,9 +11,11 @@ register bits if so.
 Useful Links
 ------------
 
+```
 http://iverilog.wikia.com/wiki/Getting_Started
 https://en.wikipedia.org/wiki/Verilog_Procedural_Interface
 http://iverilog.wikia.com/wiki/Using_VPI
 http://iverilog.icarus.com/page/plug-ins
 https://sourceforge.net/projects/vtracer/files/vtracer/vtracer-1.4/ <- charmingly old code from early 2000s that has a tcl/tk frontend. Didn't get it running, but made me nostalgic for all the perl/tk bs I did back then.
 http://www-inst.eecs.berkeley.edu/~cs150/fa06/Labs/verilog-ieee.pdf <- IEEE 1364-2001 standard document, describes how VPI internals work in some detail
+```
